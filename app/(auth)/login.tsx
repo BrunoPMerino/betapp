@@ -22,7 +22,7 @@ export default function LoginScreen() {
           {/* Logo y nombre */}
           <View style={s.header}>
             <Image
-              source={require("../assets/images/logo-betapp2.png")}
+              source={require("../../assets/images/logo-betapp2.png")}
               style={s.logo}
               resizeMode="contain"
             />
