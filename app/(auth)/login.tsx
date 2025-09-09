@@ -1,25 +1,24 @@
+import { useRouter } from "expo-router";
 import React from "react";
 import {
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  KeyboardAvoidingView,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function LoginScreen() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={s.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={s.keyboard}
-      >
+      <KeyboardAvoidingView style={s.keyboard}>
         <View style={s.content}>
-          {/* Logo y nombre */}
+          {/* Logo */}
           <View style={s.header}>
             <Image
               source={require("../../assets/images/logo-betapp2.png")}
@@ -35,7 +34,7 @@ export default function LoginScreen() {
                 style={s.input}
                 placeholder="Email"
                 placeholderTextColor="#98a0ab"
-                editable={false} // ← desactiva edición
+                editable={false}
               />
             </View>
 
@@ -45,36 +44,43 @@ export default function LoginScreen() {
                 placeholder="Password"
                 placeholderTextColor="#98a0ab"
                 secureTextEntry
-                editable={false} // ← desactiva edición
+                editable={false}
               />
               <Text style={s.rightIcon}>👁️</Text>
             </View>
 
-            <TouchableOpacity style={s.linkRight} activeOpacity={1}>
+            <TouchableOpacity
+              style={s.linkRight}
+              activeOpacity={0.8}
+              onPress={() => router.push("/reset")}
+            >
               <Text style={s.linkText}>Forgot password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={s.primaryBtn} activeOpacity={1}>
+            <TouchableOpacity style={s.primaryBtn} activeOpacity={0.85}>
               <Text style={s.primaryText}>Sign In</Text>
             </TouchableOpacity>
 
             <Text style={s.dividerText}>Or sign in with</Text>
 
             <View style={s.socialRow}>
-              <TouchableOpacity style={s.socialBtn} activeOpacity={1}>
+              <TouchableOpacity style={s.socialBtn} activeOpacity={0.8}>
                 <Text style={s.socialTxt}>f</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.socialBtn} activeOpacity={1}>
+              <TouchableOpacity style={s.socialBtn} activeOpacity={0.8}>
                 <Text style={s.socialTxt}>G+</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.socialBtn} activeOpacity={1}>
+              <TouchableOpacity style={s.socialBtn} activeOpacity={0.8}>
                 <Text style={s.socialTxt}>t</Text>
               </TouchableOpacity>
             </View>
 
             <View style={s.footerRow}>
               <Text style={s.footerText}>Don’t have an account? </Text>
-              <TouchableOpacity activeOpacity={1}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push("/register")}
+              >
                 <Text style={[s.footerText, { textDecorationLine: "underline" }]}>
                   Sign Up
                 </Text>
@@ -101,7 +107,6 @@ const s = StyleSheet.create({
     marginBottom: 24,
   },
   logo: { width: 144, height: 144, marginBottom: 8 },
-  brand: { color: "#d9d1ff", fontSize: 24, fontWeight: "700", letterSpacing: 1 },
   form: { width: "100%" },
 
   inputWrap: {
@@ -114,7 +119,6 @@ const s = StyleSheet.create({
     marginTop: 14,
   },
   input: { flex: 1, color: "#e8eef9", fontSize: 16, paddingVertical: 10 },
-  leftIcon: { marginRight: 8, color: "#c7cfe0", fontSize: 16 },
   rightIcon: { marginLeft: 8, color: "#c7cfe0", fontSize: 16 },
 
   linkRight: { alignSelf: "flex-end", marginTop: 10 },
