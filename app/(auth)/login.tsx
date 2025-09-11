@@ -57,7 +57,11 @@ export default function LoginScreen() {
               <Text style={s.linkText}>Forgot password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={s.primaryBtn} activeOpacity={0.85}>
+            <TouchableOpacity 
+            style={s.primaryBtn} 
+            activeOpacity={0.85}
+            onPress={() => router.push("../(main)/home")}
+            >
               <Text style={s.primaryText}>Sign In</Text>
             </TouchableOpacity>
 
