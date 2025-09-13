@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -10,9 +10,24 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { AuthContext } from "../../contexts/AuthContext"; // Ajusta la ruta si es diferente
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login, user } = useContext(AuthContext);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      router.replace("/(main)/home");
+    }
+  }, [user]);
+
+  const handleLogin = async () => {
+    await login(email.trim(), password);
+  };
 
   return (
     <SafeAreaView style={s.container}>
@@ -34,7 +49,10 @@ export default function LoginScreen() {
                 style={s.input}
                 placeholder="Email"
                 placeholderTextColor="#98a0ab"
-                editable={false}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
               />
             </View>
 
@@ -44,7 +62,8 @@ export default function LoginScreen() {
                 placeholder="Password"
                 placeholderTextColor="#98a0ab"
                 secureTextEntry
-                editable={false}
+                value={password}
+                onChangeText={setPassword}
               />
               <Text style={s.rightIcon}>👁️</Text>
             </View>
@@ -52,15 +71,15 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={s.linkRight}
               activeOpacity={0.8}
-              onPress={() => router.push("/reset")}
+              onPress={() => router.push("/(auth)/reset")}
             >
               <Text style={s.linkText}>Forgot password?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-            style={s.primaryBtn} 
-            activeOpacity={0.85}
-            onPress={() => router.push("../(main)/home")}
+            <TouchableOpacity
+              style={s.primaryBtn}
+              activeOpacity={0.85}
+              onPress={handleLogin}
             >
               <Text style={s.primaryText}>Sign In</Text>
             </TouchableOpacity>
@@ -83,7 +102,7 @@ export default function LoginScreen() {
               <Text style={s.footerText}>Don’t have an account? </Text>
               <TouchableOpacity
                 activeOpacity={0.8}
-                onPress={() => router.push("/register")}
+                onPress={() => router.push("/(auth)/register")}
               >
                 <Text style={[s.footerText, { textDecorationLine: "underline" }]}>
                   Sign Up
