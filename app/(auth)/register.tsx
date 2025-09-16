@@ -1,79 +1,111 @@
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useContext, useState } from "react";
 import {
-    Image,
-    KeyboardAvoidingView,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { AuthContext } from "../../contexts/AuthContext";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { register } = useContext(AuthContext);
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleRegister = async () => {
+    if (!email || !password) {
+      alert("Todos los campos son obligatorios.");
+      return;
+    }
+
+    await register(email.trim(), password);
+    router.replace("/(main)/home"); // redirige al home
+  };
 
   return (
     <SafeAreaView style={s.container}>
-      <KeyboardAvoidingView style={s.keyboard}>
-        <View style={s.content}>
-          {/* Logo */}
-          <View style={s.header}>
-            <Image
-              source={require("../../assets/images/logo-betapp2.png")}
-              style={s.logo}
-              resizeMode="contain"
-            />
-          </View>
-
-          {/* Formulario */}
-          <View style={s.form}>
-            <View style={s.inputWrap}>
-              <TextInput
-                style={s.input}
-                placeholder="Full Name"
-                placeholderTextColor="#98a0ab"
-                editable={false}
+      <KeyboardAvoidingView
+        style={s.keyboard}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+          <View style={s.content}>
+            {/* Logo */}
+            <View style={s.header}>
+              <Image
+                source={require("../../assets/images/logo-betapp2.png")}
+                style={s.logo}
+                resizeMode="contain"
               />
             </View>
 
-            <View style={s.inputWrap}>
-              <TextInput
-                style={s.input}
-                placeholder="Email"
-                placeholderTextColor="#98a0ab"
-                editable={false}
-              />
-            </View>
+            {/* Formulario */}
+            <View style={s.form}>
+              <View style={s.inputWrap}>
+                <TextInput
+                  style={s.input}
+                  placeholder="Full Name"
+                  placeholderTextColor="#98a0ab"
+                  value={fullName}
+                  onChangeText={setFullName}
+                />
+              </View>
 
-            <View style={s.inputWrap}>
-              <TextInput
-                style={s.input}
-                placeholder="Password"
-                placeholderTextColor="#98a0ab"
-                secureTextEntry
-                editable={false}
-              />
-            </View>
+              <View style={s.inputWrap}>
+                <TextInput
+                  style={s.input}
+                  placeholder="Email"
+                  placeholderTextColor="#98a0ab"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
 
-            <TouchableOpacity style={s.primaryBtn} activeOpacity={0.85}>
-              <Text style={s.primaryText}>Register</Text>
-            </TouchableOpacity>
+              <View style={s.inputWrap}>
+                <TextInput
+                  style={s.input}
+                  placeholder="Password"
+                  placeholderTextColor="#98a0ab"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                />
+              </View>
 
-            <View style={s.footerRow}>
-              <Text style={s.footerText}>Already have an account? </Text>
               <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => router.push("/login")}
+                style={s.primaryBtn}
+                activeOpacity={0.85}
+                onPress={handleRegister}
               >
-                <Text style={[s.footerText, { textDecorationLine: "underline" }]}>
-                  Sign In
-                </Text>
+                <Text style={s.primaryText}>Register</Text>
               </TouchableOpacity>
+
+              <View style={s.footerRow}>
+                <Text style={s.footerText}>Already have an account? </Text>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => router.push("/(auth)/login")}
+                >
+                  <Text style={[s.footerText, { textDecorationLine: "underline" }]}>
+                    Sign In
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -82,16 +114,9 @@ export default function RegisterScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0f1522" },
   keyboard: { flex: 1 },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 24,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
+  scroll: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 24 },
+  content: { alignItems: "center" },
+  header: { alignItems: "center", marginBottom: 24 },
   logo: { width: 144, height: 144, marginBottom: 8 },
   form: { width: "100%" },
 
