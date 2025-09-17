@@ -5,6 +5,7 @@ interface Profile {
   id: string;
   email: string;
   name: string;
+  username?: string;
   avatar_url?: string;
   bio?: string;
   birth_date?: string;
@@ -36,6 +37,8 @@ export const AuthProvider = ({ children }: any) => {
       }
 
       const userId = data.user.id;
+      console.log("ID del usuario autenticado:", userId);
+
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
@@ -47,6 +50,7 @@ export const AuthProvider = ({ children }: any) => {
       }
 
       if (!profile) {
+        console.warn("Perfil no encontrado para el ID:", userId);
         const fallbackProfile: Profile = {
           id: userId,
           email: data.user.email ?? "",

@@ -15,6 +15,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 export default function ProfileScreen() {
   const { user, updateProfile, setUser } = useContext(AuthContext);
 
+  const [username, setUsername] = useState(user?.username || "");
   const [name, setName] = useState(user?.name || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [gender, setGender] = useState(user?.gender || "");
@@ -23,6 +24,7 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     const updated = {
+      username,
       name,
       phone,
       gender,
@@ -32,11 +34,7 @@ export default function ProfileScreen() {
     const success = await updateProfile(updated);
 
     if (success && user?.id) {
-      setUser({
-        ...user,
-        ...updated,
-        id: user.id,
-      });
+      setUser({ ...user, ...updated, id: user.id });
       Alert.alert("Perfil actualizado correctamente");
       setEditing(false);
     } else {
@@ -53,18 +51,31 @@ export default function ProfileScreen() {
             style={s.avatar}
           />
 
-          <Text style={s.name}>{name || "Nombre"}</Text>
+          <Text style={s.name}>
+            {username || "Sin usuario"}
+          </Text>
           <Text style={s.email}>{user?.email || "email@example.com"}</Text>
+
+          {/* Username */}
+          <View style={s.section}>
+            <Text style={s.label}>Nombre de usuario:</Text>
+            {editing ? (
+              <TextInput
+                style={s.input}
+                value={username}
+                autoCapitalize="none"
+                onChangeText={setUsername}
+              />
+            ) : (
+              <Text style={s.value}>{username || "No definido"}</Text>
+            )}
+          </View>
 
           {/* Nombre */}
           <View style={s.section}>
             <Text style={s.label}>Nombre:</Text>
             {editing ? (
-              <TextInput
-                style={s.input}
-                value={name}
-                onChangeText={setName}
-              />
+              <TextInput style={s.input} value={name} onChangeText={setName} />
             ) : (
               <Text style={s.value}>{name || "No definido"}</Text>
             )}
