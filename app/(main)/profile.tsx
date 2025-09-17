@@ -1,15 +1,49 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import {
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { AuthContext } from "../../contexts/AuthContext";
 
 export default function ProfileScreen() {
+  const { user, updateProfile, setUser } = useContext(AuthContext);
+
+  const [name, setName] = useState(user?.name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [gender, setGender] = useState(user?.gender || "");
+  const [bio, setBio] = useState(user?.bio || "");
+  const [editing, setEditing] = useState(false);
+
+  const handleSave = async () => {
+    const updated = {
+      name,
+      phone,
+      gender,
+      bio,
+    };
+
+    const success = await updateProfile(updated);
+
+    if (success && user?.id) {
+      setUser({
+        ...user,
+        ...updated,
+        id: user.id,
+      });
+      Alert.alert("Perfil actualizado correctamente");
+      setEditing(false);
+    } else {
+      Alert.alert("Error al actualizar perfil");
+    }
+  };
+
   return (
     <SafeAreaView style={s.container}>
       <ScrollView contentContainerStyle={s.scroll}>
@@ -18,36 +52,76 @@ export default function ProfileScreen() {
             source={require("../../assets/images/logo-betapp2.png")}
             style={s.avatar}
           />
-          <Text style={s.name}>Bruno Pérez</Text>
-          <Text style={s.email}>bruno.perez@example.com</Text>
 
+          <Text style={s.name}>{name || "Nombre"}</Text>
+          <Text style={s.email}>{user?.email || "email@example.com"}</Text>
+
+          {/* Nombre */}
           <View style={s.section}>
-            <Text style={s.label}>Balance:</Text>
-            <Text style={s.value}>$12,450.00</Text>
+            <Text style={s.label}>Nombre:</Text>
+            {editing ? (
+              <TextInput
+                style={s.input}
+                value={name}
+                onChangeText={setName}
+              />
+            ) : (
+              <Text style={s.value}>{name || "No definido"}</Text>
+            )}
           </View>
 
+          {/* Teléfono */}
           <View style={s.section}>
-            <Text style={s.label}>Juegos Ganados:</Text>
-            <Text style={s.value}>87</Text>
+            <Text style={s.label}>Teléfono:</Text>
+            {editing ? (
+              <TextInput
+                style={s.input}
+                value={phone}
+                keyboardType="phone-pad"
+                onChangeText={setPhone}
+              />
+            ) : (
+              <Text style={s.value}>{phone || "No definido"}</Text>
+            )}
           </View>
 
+          {/* Género */}
           <View style={s.section}>
-            <Text style={s.label}>Juegos de Poker:</Text>
-            <Text style={s.value}>134</Text>
+            <Text style={s.label}>Género:</Text>
+            {editing ? (
+              <TextInput
+                style={s.input}
+                value={gender}
+                onChangeText={setGender}
+              />
+            ) : (
+              <Text style={s.value}>{gender || "No definido"}</Text>
+            )}
           </View>
 
+          {/* Biografía */}
           <View style={s.section}>
-            <Text style={s.label}>Juegos de Blackjack:</Text>
-            <Text style={s.value}>102</Text>
+            <Text style={s.label}>Biografía:</Text>
+            {editing ? (
+              <TextInput
+                style={[s.input, { height: 60 }]}
+                multiline
+                value={bio}
+                onChangeText={setBio}
+              />
+            ) : (
+              <Text style={s.value}>{bio || "No definida"}</Text>
+            )}
           </View>
 
-          <View style={s.section}>
-            <Text style={s.label}>Mayor Ganancia:</Text>
-            <Text style={s.value}>$4,000.00</Text>
-          </View>
-
-          <TouchableOpacity style={s.addBalanceBtn} activeOpacity={0.85}>
-            <Text style={s.addBalanceText}>Agregar Saldo</Text>
+          <TouchableOpacity
+            style={s.addBalanceBtn}
+            activeOpacity={0.85}
+            onPress={editing ? handleSave : () => setEditing(true)}
+          >
+            <Text style={s.addBalanceText}>
+              {editing ? "Guardar Cambios" : "Modificar Perfil"}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -61,8 +135,8 @@ const s = StyleSheet.create({
     backgroundColor: "#0f1522",
   },
   scroll: {
-    flexGrow: 1, 
-    justifyContent: "center", 
+    flexGrow: 1,
+    justifyContent: "center",
     alignItems: "center",
     padding: 24,
   },
@@ -84,7 +158,7 @@ const s = StyleSheet.create({
     color: "#e8eef9",
     fontSize: 22,
     fontWeight: "700",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   email: {
     color: "#b0b8c8",
@@ -97,18 +171,28 @@ const s = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: "column",
   },
   label: {
     color: "#c9d1de",
     fontSize: 16,
     fontWeight: "500",
+    marginBottom: 6,
   },
   value: {
     color: "#e8eef9",
     fontSize: 16,
     fontWeight: "700",
+  },
+  input: {
+    backgroundColor: "#1a2131",
+    color: "#e8eef9",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#374151",
   },
   addBalanceBtn: {
     marginTop: 20,

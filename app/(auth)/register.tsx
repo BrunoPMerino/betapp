@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useContext, useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -18,18 +19,23 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { register } = useContext(AuthContext);
 
-  const [fullName, setFullName] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleRegister = async () => {
-    if (!email || !password) {
-      alert("Todos los campos son obligatorios.");
+    if (!name || !email || !password) {
+      Alert.alert("Error", "Por favor completa todos los campos.");
       return;
     }
 
-    await register(email.trim(), password);
-    router.replace("/(main)/home"); // redirige al home
+    const success = await register({ email, name }, password);
+
+    if (success) {
+      router.replace("/(main)/home");
+    } else {
+      Alert.alert("Error", "No se pudo completar el registro.");
+    }
   };
 
   return (
@@ -38,7 +44,10 @@ export default function RegisterScreen() {
         style={s.keyboard}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={s.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={s.content}>
             {/* Logo */}
             <View style={s.header}>
@@ -56,8 +65,8 @@ export default function RegisterScreen() {
                   style={s.input}
                   placeholder="Full Name"
                   placeholderTextColor="#98a0ab"
-                  value={fullName}
-                  onChangeText={setFullName}
+                  value={name}
+                  onChangeText={setName}
                 />
               </View>
 
@@ -96,9 +105,11 @@ export default function RegisterScreen() {
                 <Text style={s.footerText}>Already have an account? </Text>
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => router.push("/(auth)/login")}
+                  onPress={() => router.push("/login")}
                 >
-                  <Text style={[s.footerText, { textDecorationLine: "underline" }]}>
+                  <Text
+                    style={[s.footerText, { textDecorationLine: "underline" }]}
+                  >
                     Sign In
                   </Text>
                 </TouchableOpacity>
@@ -112,14 +123,34 @@ export default function RegisterScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0f1522" },
-  keyboard: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 24 },
-  content: { alignItems: "center" },
-  header: { alignItems: "center", marginBottom: 24 },
-  logo: { width: 144, height: 144, marginBottom: 8 },
-  form: { width: "100%" },
-
+  container: {
+    flex: 1,
+    backgroundColor: "#0f1522",
+  },
+  keyboard: {
+    flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  logo: {
+    width: 144,
+    height: 144,
+    marginBottom: 8,
+  },
+  form: {
+    width: "100%",
+  },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
@@ -129,8 +160,12 @@ const s = StyleSheet.create({
     height: 52,
     marginTop: 14,
   },
-  input: { flex: 1, color: "#e8eef9", fontSize: 16, paddingVertical: 10 },
-
+  input: {
+    flex: 1,
+    color: "#e8eef9",
+    fontSize: 16,
+    paddingVertical: 10,
+  },
   primaryBtn: {
     marginTop: 18,
     backgroundColor: "#7a5cff",
@@ -140,8 +175,17 @@ const s = StyleSheet.create({
     justifyContent: "center",
     elevation: 4,
   },
-  primaryText: { color: "white", fontSize: 17, fontWeight: "700" },
-
-  footerRow: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
-  footerText: { color: "#c9d1de" },
+  primaryText: {
+    color: "white",
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  footerText: {
+    color: "#c9d1de",
+  },
 });
