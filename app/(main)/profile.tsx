@@ -1,7 +1,9 @@
-import React, { useContext, useState } from "react";
+import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
+import React, { useContext, useRef, useState } from "react";
 import {
   Alert,
   Image,
+  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -22,15 +24,15 @@ export default function ProfileScreen() {
   const [bio, setBio] = useState(user?.bio || "");
   const [editing, setEditing] = useState(false);
 
-  const handleSave = async () => {
-    const updated = {
-      username,
-      name,
-      phone,
-      gender,
-      bio,
-    };
+  // 📸 estados cámara
+  const [showCamera, setShowCamera] = useState(false);
+  const [facing, setFacing] = useState<CameraType>("back");
+  const [permission, requestPermission] = useCameraPermissions();
+  const [photo, setPhoto] = useState<string | null>(null);
+  const cameraRef = useRef<CameraView | null>(null);
 
+  const handleSave = async () => {
+    const updated = { username, name, phone, gender, bio };
     const success = await updateProfile(updated);
 
     if (success && user?.id) {
@@ -42,21 +44,35 @@ export default function ProfileScreen() {
     }
   };
 
+  async function takePicture() {
+    if (cameraRef.current) {
+      const picture = await cameraRef.current.takePictureAsync();
+      setPhoto(picture.uri);
+    }
+  }
+
+  function toggleCameraFacing() {
+    setFacing((current) => (current === "back" ? "front" : "back"));
+  }
+
   return (
     <SafeAreaView style={s.container}>
       <ScrollView contentContainerStyle={s.scroll}>
         <View style={s.profileCard}>
-          <Image
-            source={require("../../assets/images/logo-betapp2.png")}
-            style={s.avatar}
-          />
+          {/* 👤 Imagen de perfil */}
+          {photo ? (
+            <Image source={{ uri: photo }} style={s.avatar} />
+          ) : (
+            <Image
+              source={require("../../assets/images/logo-betapp2.png")}
+              style={s.avatar}
+            />
+          )}
 
-          <Text style={s.name}>
-            {username || "Sin usuario"}
-          </Text>
+          <Text style={s.name}>{username || "Sin usuario"}</Text>
           <Text style={s.email}>{user?.email || "email@example.com"}</Text>
 
-          {/* Username */}
+          {/* Campos */}
           <View style={s.section}>
             <Text style={s.label}>Nombre de usuario:</Text>
             {editing ? (
@@ -71,7 +87,6 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          {/* Nombre */}
           <View style={s.section}>
             <Text style={s.label}>Nombre:</Text>
             {editing ? (
@@ -81,7 +96,6 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          {/* Teléfono */}
           <View style={s.section}>
             <Text style={s.label}>Teléfono:</Text>
             {editing ? (
@@ -96,7 +110,6 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          {/* Género */}
           <View style={s.section}>
             <Text style={s.label}>Género:</Text>
             {editing ? (
@@ -110,7 +123,6 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          {/* Biografía */}
           <View style={s.section}>
             <Text style={s.label}>Biografía:</Text>
             {editing ? (
@@ -125,6 +137,7 @@ export default function ProfileScreen() {
             )}
           </View>
 
+          {/* Botón de guardar */}
           <TouchableOpacity
             style={s.addBalanceBtn}
             activeOpacity={0.85}
@@ -134,17 +147,87 @@ export default function ProfileScreen() {
               {editing ? "Guardar Cambios" : "Modificar Perfil"}
             </Text>
           </TouchableOpacity>
+
+          {/* Botón abrir cámara */}
+          <TouchableOpacity
+            style={[s.addBalanceBtn, { backgroundColor: "#ff914d" }]}
+            activeOpacity={0.85}
+            onPress={() => setShowCamera(true)}
+          >
+            <Text style={s.addBalanceText}>Abrir Cámara</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* 📸 Modal cámara */}
+      <Modal visible={showCamera} animationType="slide">
+        <View style={{ flex: 1, backgroundColor: "black" }}>
+          {!permission ? (
+            <View />
+          ) : !permission.granted ? (
+            <View style={styles.container}>
+              <Text style={styles.message}>
+                Necesitamos tu permiso para usar la cámara
+              </Text>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={requestPermission}
+              >
+                <Text style={styles.text}>Conceder permiso</Text>
+              </TouchableOpacity>
+            </View>
+          ) : photo ? (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: photo }} style={styles.preview} />
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => setPhoto(null)}
+                >
+                  <Text style={styles.text}>Reintentar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => setShowCamera(false)}
+                >
+                  <Text style={styles.text}>Usar Foto</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <>
+              <CameraView
+                style={styles.camera}
+                facing={facing}
+                ref={cameraRef}
+              />
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={toggleCameraFacing}
+                >
+                  <Text style={styles.text}>Cambiar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={takePicture}>
+                  <Text style={styles.text}>Capturar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => setShowCamera(false)}
+                >
+                  <Text style={styles.text}>Cerrar</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0f1522",
-  },
+  container: { flex: 1, backgroundColor: "#0f1522" },
   scroll: {
     flexGrow: 1,
     justifyContent: "center",
@@ -182,19 +265,9 @@ const s = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     marginBottom: 12,
-    flexDirection: "column",
   },
-  label: {
-    color: "#c9d1de",
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 6,
-  },
-  value: {
-    color: "#e8eef9",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  label: { color: "#c9d1de", fontSize: 16, fontWeight: "500", marginBottom: 6 },
+  value: { color: "#e8eef9", fontSize: 16, fontWeight: "700" },
   input: {
     backgroundColor: "#1a2131",
     color: "#e8eef9",
@@ -212,9 +285,36 @@ const s = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 26,
   },
-  addBalanceText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+  addBalanceText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+});
+
+// 📸 estilos de cámara
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "center", backgroundColor: "black" },
+  message: { textAlign: "center", paddingBottom: 10, color: "white" },
+  camera: { flex: 1 },
+  buttonContainer: {
+    position: "absolute",
+    bottom: 30,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+  button: {
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 12,
+    borderRadius: 8,
+  },
+  text: { fontSize: 16, fontWeight: "600", color: "white" },
+  previewContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  preview: {
+    width: "100%",
+    height: "80%",
+    borderRadius: 12,
   },
 });
