@@ -1,6 +1,9 @@
+import { AuthContext } from "@/contexts/AuthContext";
+import { supabase } from "@/utils/supabase";
+import { decode } from "base64-arraybuffer";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
-import React, { useRef, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import {
     Image,
     Modal,
@@ -11,30 +14,34 @@ import {
 } from "react-native";
 
 type CameraModalProps = {
-  visible: boolean;
+  isVisible: boolean;
   onClose: () => void;
-  onPictureTaken: (uri: string) => void;
+  onConfirm: (url: string) => void;
 };
 
 export default function CameraModal({
-  visible,
+  isVisible,
   onClose,
-  onPictureTaken,
+  onConfirm,
 }: CameraModalProps) {
+  const { user } = useContext(AuthContext);
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<{ uri: string; base64: string } | null>(
+    null
+  );
   const cameraRef = useRef<CameraView | null>(null);
 
   async function takePicture() {
     if (cameraRef.current) {
-      const picture = await cameraRef.current.takePictureAsync();
-      setPhoto(picture.uri);
+      const picture = await cameraRef.current.takePictureAsync({
+        quality: 0.5,
+        base64: true,
+      });
+      if (picture?.uri && picture?.base64) {
+        setPhoto({ uri: picture.uri, base64: picture.base64 });
+      }
     }
-  }
-
-  function toggleCameraFacing() {
-    setFacing((current) => (current === "back" ? "front" : "back"));
   }
 
   async function pickImage() {
@@ -42,23 +49,47 @@ export default function CameraModal({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.7,
+      base64: true,
     });
 
-    if (!result.canceled) {
-      setPhoto(result.assets[0].uri);
+    if (!result.canceled && result.assets[0].uri && result.assets[0].base64) {
+      setPhoto({
+        uri: result.assets[0].uri,
+        base64: result.assets[0].base64,
+      });
     }
   }
 
-  function handleUsePhoto() {
-    if (photo) {
-      onPictureTaken(photo); // ✅ enviamos la foto al padre
+  async function handleSaveImageBucket() {
+    if (!photo || !user?.id) return;
+
+    try {
+      const fileName = `${user.id}/${Date.now()}.jpg`;
+      const { data, error } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, decode(photo.base64), {
+          contentType: "image/jpg",
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      // Obtener URL pública
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(fileName);
+
+      onConfirm(publicUrl);
+    } catch (err) {
+      console.log("❌ Error subiendo imagen:", err);
+    } finally {
+      onClose();
     }
-    onClose();
   }
 
   return (
-    <Modal visible={visible} animationType="slide">
+    <Modal visible={isVisible} animationType="slide">
       <View style={{ flex: 1, backgroundColor: "black" }}>
         {!permission ? (
           <View />
@@ -73,7 +104,7 @@ export default function CameraModal({
           </View>
         ) : photo ? (
           <View style={styles.previewContainer}>
-            <Image source={{ uri: photo }} style={styles.preview} />
+            <Image source={{ uri: photo.uri }} style={styles.preview} />
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.button}
@@ -81,8 +112,11 @@ export default function CameraModal({
               >
                 <Text style={styles.text}>Reintentar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.button} onPress={handleUsePhoto}>
-                <Text style={styles.text}>Usar Foto</Text>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={handleSaveImageBucket}
+              >
+                <Text style={styles.text}>Guardar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -92,7 +126,9 @@ export default function CameraModal({
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.button}
-                onPress={toggleCameraFacing}
+                onPress={() =>
+                  setFacing((c) => (c === "back" ? "front" : "back"))
+                }
               >
                 <Text style={styles.text}>Cambiar</Text>
               </TouchableOpacity>
@@ -136,9 +172,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  preview: {
-    width: "100%",
-    height: "80%",
-    borderRadius: 12,
-  },
+  preview: { width: "100%", height: "80%", borderRadius: 12 },
 });

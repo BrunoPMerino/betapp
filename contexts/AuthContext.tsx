@@ -1,5 +1,5 @@
 import { supabase } from "@/utils/supabase";
-import { createContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 interface Profile {
   id: string;
@@ -12,6 +12,7 @@ interface Profile {
   phone?: string;
   gender?: string;
   updated_at?: string;
+  avatar?: string | null;
 }
 
 interface AuthContextProps {
@@ -168,4 +169,8 @@ export const AuthProvider = ({ children }: any) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  return useContext(AuthContext);
 };

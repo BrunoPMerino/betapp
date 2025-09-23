@@ -23,12 +23,12 @@ export default function ProfileScreen() {
   const [bio, setBio] = useState(user?.bio || "");
   const [editing, setEditing] = useState(false);
 
-  // 📸 estado para avatar y modal
-  const [photo, setPhoto] = useState<string | null>(null);
+  // 📸 ahora avatar se maneja con URL desde supabase
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || null);
   const [showCamera, setShowCamera] = useState(false);
 
   const handleSave = async () => {
-    const updated = { username, name, phone, gender, bio };
+    const updated = { username, name, phone, gender, bio, avatar: avatarUrl };
     const success = await updateProfile(updated);
 
     if (success && user?.id) {
@@ -45,8 +45,8 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={s.scroll}>
         <View style={s.profileCard}>
           {/* 👤 Imagen de perfil */}
-          {photo ? (
-            <Image source={{ uri: photo }} style={s.avatar} />
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={s.avatar} />
           ) : (
             <Image
               source={require("../../assets/images/logo-betapp2.png")}
@@ -143,26 +143,26 @@ export default function ProfileScreen() {
             activeOpacity={0.85}
             onPress={() => setShowCamera(true)}
           >
-            <Text style={s.addBalanceText}>Abrir Cámara</Text>
+            <Text style={s.addBalanceText}>Cambiar foto</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
       {/* 📸 Modal de cámara */}
       <CameraModal
-        visible={showCamera}
+        isVisible={showCamera}
+        onConfirm={(url) => {
+          setAvatarUrl(url);
+          setShowCamera(false);
+        }}
         onClose={() => setShowCamera(false)}
-        onPictureTaken={(uri) => setPhoto(uri)}
       />
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0f1522",
-  },
+  container: { flex: 1, backgroundColor: "#0f1522" },
   scroll: {
     flexGrow: 1,
     justifyContent: "center",
@@ -177,23 +177,9 @@ const s = StyleSheet.create({
     width: "100%",
     maxWidth: 380,
   },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    marginBottom: 16,
-  },
-  name: {
-    color: "#e8eef9",
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 2,
-  },
-  email: {
-    color: "#b0b8c8",
-    fontSize: 14,
-    marginBottom: 24,
-  },
+  avatar: { width: 96, height: 96, borderRadius: 48, marginBottom: 16 },
+  name: { color: "#e8eef9", fontSize: 22, fontWeight: "700", marginBottom: 2 },
+  email: { color: "#b0b8c8", fontSize: 14, marginBottom: 24 },
   section: {
     width: "100%",
     backgroundColor: "#252c3a",
@@ -201,17 +187,8 @@ const s = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 12,
   },
-  label: {
-    color: "#c9d1de",
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 6,
-  },
-  value: {
-    color: "#e8eef9",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  label: { color: "#c9d1de", fontSize: 16, fontWeight: "500", marginBottom: 6 },
+  value: { color: "#e8eef9", fontSize: 16, fontWeight: "700" },
   input: {
     backgroundColor: "#1a2131",
     color: "#e8eef9",
@@ -229,9 +206,5 @@ const s = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 26,
   },
-  addBalanceText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  addBalanceText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });
