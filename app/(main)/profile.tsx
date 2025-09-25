@@ -1,3 +1,6 @@
+import { supabase } from "@/utils/supabase";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router"; // 👈 import router
 import React, { useContext, useState } from "react";
 import {
   Alert,
@@ -15,6 +18,7 @@ import CameraModal from "../components/CameraModal";
 
 export default function ProfileScreen() {
   const { user, updateProfile, setUser } = useContext(AuthContext);
+  const router = useRouter();
 
   const [username, setUsername] = useState(user?.username || "");
   const [name, setName] = useState(user?.name || "");
@@ -23,7 +27,6 @@ export default function ProfileScreen() {
   const [bio, setBio] = useState(user?.bio || "");
   const [editing, setEditing] = useState(false);
 
-  // 📸 ahora avatar se maneja con URL desde supabase
   const [avatar_url, setAvatar_url] = useState(user?.avatar_url || null);
   const [showCamera, setShowCamera] = useState(false);
 
@@ -40,19 +43,42 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      router.replace("/(auth)/login"); // 👈 redirigir al login
+    } catch (error) {
+      console.error("Logout error:", error);
+      Alert.alert("Error al cerrar sesión");
+    }
+  };
+
   return (
     <SafeAreaView style={s.container}>
       <ScrollView contentContainerStyle={s.scroll}>
         <View style={s.profileCard}>
-          {/* 👤 Imagen de perfil */}
-          {avatar_url ? (
-            <Image source={{ uri: avatar_url }} style={s.avatar} />
-          ) : (
-            <Image
-              source={require("../../assets/images/logo-betapp2.png")}
-              style={s.avatar}
-            />
-          )}
+          {/* 👤 Avatar + botón editar */}
+          <View style={s.avatarWrapper}>
+            <TouchableOpacity onPress={() => setShowCamera(true)}>
+              {avatar_url ? (
+                <Image source={{ uri: avatar_url }} style={s.avatar} />
+              ) : (
+                <Image
+                  source={require("../../assets/images/logo-betapp2.png")}
+                  style={s.avatar}
+                />
+              )}
+            </TouchableOpacity>
+
+            {/* Botón pequeño de cámara/lápiz */}
+            <TouchableOpacity
+              style={s.editAvatarBtn}
+              onPress={() => setShowCamera(true)}
+            >
+              <Ionicons name="camera" size={20} color="#fff" />
+            </TouchableOpacity>
+          </View>
 
           <Text style={s.name}>{username || "Sin usuario"}</Text>
           <Text style={s.email}>{user?.email || "email@example.com"}</Text>
@@ -137,13 +163,13 @@ export default function ProfileScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Botón abrir cámara */}
+          {/* 🔴 Botón de cerrar sesión */}
           <TouchableOpacity
-            style={[s.addBalanceBtn, { backgroundColor: "#ff914d" }]}
+            style={[s.addBalanceBtn, { backgroundColor: "#ff4d4d" }]}
             activeOpacity={0.85}
-            onPress={() => setShowCamera(true)}
+            onPress={handleLogout}
           >
-            <Text style={s.addBalanceText}>Cambiar foto</Text>
+            <Text style={s.addBalanceText}>Cerrar Sesión</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -177,7 +203,19 @@ const s = StyleSheet.create({
     width: "100%",
     maxWidth: 380,
   },
-  avatar: { width: 96, height: 96, borderRadius: 48, marginBottom: 16 },
+  avatarWrapper: {
+    position: "relative",
+    marginBottom: 16,
+  },
+  avatar: { width: 96, height: 96, borderRadius: 48 },
+  editAvatarBtn: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#7a5cff",
+    borderRadius: 16,
+    padding: 6,
+  },
   name: { color: "#e8eef9", fontSize: 22, fontWeight: "700", marginBottom: 2 },
   email: { color: "#b0b8c8", fontSize: 14, marginBottom: 24 },
   section: {
