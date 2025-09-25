@@ -6,13 +6,12 @@ interface Profile {
   email: string;
   name: string;
   username?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   bio?: string;
   birth_date?: string;
   phone?: string;
   gender?: string;
   updated_at?: string;
-  avatar?: string | null;
 }
 
 interface AuthContextProps {
@@ -74,6 +73,7 @@ export const AuthProvider = ({ children }: any) => {
     password: string
   ): Promise<boolean> => {
     try {
+      // Registrar sin necesidad de confirmación por correo
       const { data, error } = await supabase.auth.signUp({
         email: user.email,
         password,
@@ -81,6 +81,7 @@ export const AuthProvider = ({ children }: any) => {
           data: {
             name: user.name,
           },
+          emailRedirectTo: undefined, // 🔑 evita el flujo de confirmación
         },
       });
 
@@ -89,9 +90,28 @@ export const AuthProvider = ({ children }: any) => {
         return false;
       }
 
-      if (data.user) {
+      // ⚡ Si no hay sesión creada automáticamente, forzar login
+      let userId = data.user?.id;
+
+      if (!data.session && data.user) {
+        const { data: loginData, error: loginError } =
+          await supabase.auth.signInWithPassword({
+            email: user.email,
+            password,
+          });
+
+        if (loginError) {
+          console.error("Auto login error:", loginError.message);
+          return false;
+        }
+
+        userId = loginData.user.id;
+      }
+
+      if (userId) {
+        // Crear perfil en tabla "profiles"
         const { error: profileError } = await supabase.from("profiles").insert({
-          id: data.user.id,
+          id: userId,
           email: user.email,
           name: user.name,
         });
@@ -102,7 +122,7 @@ export const AuthProvider = ({ children }: any) => {
         }
 
         setUser({
-          id: data.user.id,
+          id: userId,
           email: user.email,
           name: user.name,
         });

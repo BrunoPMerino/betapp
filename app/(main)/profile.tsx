@@ -24,11 +24,11 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false);
 
   // 📸 ahora avatar se maneja con URL desde supabase
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || null);
+  const [avatar_url, setAvatar_url] = useState(user?.avatar_url || null);
   const [showCamera, setShowCamera] = useState(false);
 
   const handleSave = async () => {
-    const updated = { username, name, phone, gender, bio, avatar: avatarUrl };
+    const updated = { username, name, phone, gender, bio, avatar_url };
     const success = await updateProfile(updated);
 
     if (success && user?.id) {
@@ -45,8 +45,8 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={s.scroll}>
         <View style={s.profileCard}>
           {/* 👤 Imagen de perfil */}
-          {avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={s.avatar} />
+          {avatar_url ? (
+            <Image source={{ uri: avatar_url }} style={s.avatar} />
           ) : (
             <Image
               source={require("../../assets/images/logo-betapp2.png")}
@@ -152,7 +152,7 @@ export default function ProfileScreen() {
       <CameraModal
         isVisible={showCamera}
         onConfirm={(url) => {
-          setAvatarUrl(url);
+          setAvatar_url(url);
           setShowCamera(false);
         }}
         onClose={() => setShowCamera(false)}
